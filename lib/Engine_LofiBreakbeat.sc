@@ -25,7 +25,7 @@ Engine_LofiBreakbeat : CroneEngine {
             rate = rate*Lag.kr(TChoose.kr(t_rate,[1,1,-1]),60/bpm*TChoose.kr(t_rate,[0,0.1,0.5,1,2,4]));
             playbuf=PlayBuf.ar(2,bufnum,rate,t_jump,TChoose.kr(t_jump,(0..16)/16)*BufFrames.kr(bufnum),loop:1);
             snd=LofiBreakbeat.ar(bufnumtemp,playbuf,
-                capturetrigger:t_capture*TChoose.kr(t_trig,0.125*(1..32)),
+                capturetrigger:t_capture*TChoose.kr(t_capture,0.125*(1..32)),
                 duration:TWChoose.kr(t_capture,[0.125/4,0.125/2,0.125,0.25,0.5,1,2,4,8],[0.25,0.5,1,1,3,3,3,3,4],1)*48000*60/bpm,
                 ampdropout:1
             );
@@ -53,23 +53,23 @@ Engine_LofiBreakbeat : CroneEngine {
         });
 
         this.addCommand("bb_jump","", { arg msg;
-            synLofiBreakbeat.set(\t_jump,1);)
+            synLofiBreakbeat.set(\t_jump,1);
         });
 
         this.addCommand("bb_rate","", { arg msg;
-            synLofiBreakbeat.set(\t_rate,1);)
+            synLofiBreakbeat.set(\t_rate,1);
         });
 
         this.addCommand("bb_capture","", { arg msg;
-            synLofiBreakbeat.set(\t_capture,1);)
+            synLofiBreakbeat.set(\t_capture,1);
         });
 
         this.addCommand("bb_bpm","f", { arg msg;
-            synLofiBreakbeat.set(\bpm,msg[1])
+            synLofiBreakbeat.set(\bpm,msg[1]);
         });
 
         this.addCommand("bb_amp","f", { arg msg;
-            synLofiBreakbeat.set(\amp,msg[1])
+            synLofiBreakbeat.set(\amp,msg[1]);
         });
 
         // ^ LofiBreakbeat specific
