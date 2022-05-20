@@ -21,12 +21,16 @@ Engine_LofiBreakbeat : CroneEngine {
         SynthDef("SynDefLofiBreakbeat",{
             arg out=0,amp=0,bpmsource=150,bpm=150,t_capture=0,t_jump=0,t_rate,bufnum,bufnumtemp;
             var playbuf,snd,rate;
+            var durationChoose = TWChoose.kr(Dust.kr(1)+t_capture,[0.125/4,0.125/2,0.125,0.25,0.5,1,2,4,8],[0.25,0.5,1,1,3,3,3,3,4],1);
+            var durationTrigger=durationChoose*48000*60/bpm;
+            var captureTriggerChoose = Dust.kr(1/(durationTrigger/48000))+t_capture;
+            var captureTrigger = captureTriggerChoose*TChoose.kr(captureTriggerChoose,0.125*(1..32));
             rate = bpm/bpmsource*BufRateScale.kr(bufnum);
             rate = rate*Lag.kr(TChoose.kr(t_rate,[1,1,-1]),60/bpm*TChoose.kr(t_rate,[0,0.1,0.5,1,2,4]));
-            playbuf=PlayBuf.ar(2,bufnum,rate,t_jump,TChoose.kr(t_jump,(0..16)/16)*BufFrames.kr(bufnum),loop:1);
-            snd=LofiBreakbeat.ar(bufnumtemp,playbuf,
-                capturetrigger:t_capture*TChoose.kr(t_capture,0.125*(1..32)),
-                duration:TWChoose.kr(t_capture,[0.125/4,0.125/2,0.125,0.25,0.5,1,2,4,8],[0.25,0.5,1,1,3,3,3,3,4],1)*48000*60/bpm,
+            playbuf=PlayBuf.ar(2,bufnum,rate,TChoose.kr(t_jump,(0..16)/16)*BufFrames.kr(bufnum),loop:1);
+            snd=Breakcore.ar(bufnumtemp,playbuf,
+                capturetrigger:captureTrigger,
+                duration:durationTrigger,
                 ampdropout:1
             );
             snd=HPF.ar(snd,100);

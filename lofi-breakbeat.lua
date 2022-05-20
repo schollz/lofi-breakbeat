@@ -14,17 +14,18 @@ local s={
 }
 
 function get_bpm(fname)
-  local audio_length=audio.length(fname) -- TODO: correctly get audio lenght
-  bpm=fname:match("bpm%d+")
+local ch,samples,samplerate=audio.file_info(fname)
+  local audio_length=samples/48000.0
+  print(fname,audio_length)
+  local bpm=fname:match("bpm%d+")
   if bpm~=nil then
     bpm=tonumber(bpm:match("%d+"))
   end
   if bpm~=nil then
+    print(bpm,util.round(audio_length/(60/bpm)))
     do return bpm,util.round(audio_length/(60/bpm)) end
   end
-
-
-
+  
   local closet_bpm={0,100000}
   for bpm=100,200 do
     local measures=audio_length/((60/bpm)*4)
@@ -38,14 +39,13 @@ function get_bpm(fname)
       end
     end
   end
-  return closet_bpm[1],util.round(audio_length/(60/bpm))
-
+  return closet_bpm[1],util.round(audio_length/(60/closet_bpm[1]))
 end
 
 
 function init()
   print("init")
-  params:add{type="control",id="amp",name="amp",controlspec=controlspec.new(0,0.5,'lin',0,0,'amp',0.01/0.5),action=function(v)
+  params:add{type="control",id="amp",name="amp",controlspec=controlspec.new(0,0.5,'lin',0,0.5,'amp',0.01/0.5),action=function(v)
     engine.bb_amp(v)
   end
 }
@@ -54,15 +54,15 @@ params:set_action("bb_file",function(fname) load_file(fname) end)
 params:add{type="binary",name="play",id="bb_play",behavior="toggle",action=function(v)
   toggle_start(v==1)
 end}
-load_file("/home/we/dust/code/lofi-breakbeat/lib/loop_bpm160.wav")
+load_file("/home/we/dust/code/lofi-breakbeat/lib/loop_bpm150.wav")
 lattice=lattice_:new()
 pattern=lattice:new_pattern{
   action=function(t)
-    looper()
+    looping()
   end,
-  division=1/8,
+  division=1/4,
 }
-lattice:start()
+toggle_start(true)
 end
 
 function toggle_start(go)
@@ -85,7 +85,7 @@ function looping()
   s.beat=s.beat+1
   if s.beat>s.beats then
     s.beat=1
-    engine.bb_reset()
+    engine.bb_jump()
   end
   if s.bpm_clock~=clock.get_tempo() then
     s.bpm_clock=clock.get_tempo()
@@ -94,12 +94,12 @@ function looping()
 end
 
 function load_file(fname)
-  s.bpm.s.beats=get_bpm(fname)
-  if bpm==nil then
+  s.bpm,s.beats=get_bpm(fname)
+  if s.bpm==nil then
     print('ERROR: could not find bpm for '..fname)
     do return end
   end
-  engine.bb_load(fname,bpm)
+  engine.bb_load(fname,s.bpm)
 end
 
 function enc(k,d)
@@ -117,7 +117,7 @@ function key(k,z)
     end
   elseif k==3 and z==1 then
     if s.shift then
-      engine.bb_reset()
+      toggle_start()
     else
       engine.bb_jump()
     end
