@@ -11,6 +11,7 @@ local s={
   bpm_clock=120,
   beat=1,
   playing=false,
+  lofi=0.0,
 }
 
 function get_bpm(fname)
@@ -49,6 +50,14 @@ function init()
     engine.bb_amp(v)
   end
 }
+  params:add{type="control",id="hpf",name="hpf",controlspec=controlspec.new(10,15000,'lin',0,50,'hz',100/15000),action=function(v)
+    engine.bb_hpf(v)
+  end
+}
+  params:add{type="control",id="lpf",name="lpf",controlspec=controlspec.new(10,15000,'lin',0,6000,'hz',100/15000),action=function(v)
+    engine.bb_lpf(v)
+  end
+}
 params:add_file("bb_file","load file",_path.audio)
 params:set_action("bb_file",function(fname) load_file(fname) end)
 params:add{type="binary",name="play",id="bb_play",behavior="toggle",action=function(v)
@@ -83,9 +92,12 @@ end
 
 function looping()
   s.beat=s.beat+1
+  engine.bb_jump()
   if s.beat>s.beats then
+    if math.random()<0.5 then 
+      engine.bb_reset()
+    end
     s.beat=1
-    engine.bb_jump()
   end
   if s.bpm_clock~=clock.get_tempo() then
     s.bpm_clock=clock.get_tempo()
@@ -103,24 +115,23 @@ function load_file(fname)
 end
 
 function enc(k,d)
+  if k==1 then
   params:delta("amp",d)
+  elseif k==2 then 
+  params:delta("hpf",d)
+  elseif k==3 then 
+  params:delta("lpf",d)
+    end
 end
 
 function key(k,z)
   if k==1 then
     s.shift=z==1
   elseif k==2 and z==1 then
-    if s.shift then
-      engine.bb_rate()
-    else
-      engine.bb_capture()
-    end
+    s.lofi=1-s.lofi
+    engine.bb_mix(s.lofi)
   elseif k==3 and z==1 then
-    if s.shift then
-      toggle_start()
-    else
-      engine.bb_jump()
-    end
+    toggle_start()
   end
 end
 
